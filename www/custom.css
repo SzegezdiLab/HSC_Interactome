@@ -1,0 +1,23 @@
+.flex-container {
+    display: flex;
+}
+
+.flex-child {
+    flex: 1
+  }
+
+.flex-child:first-child {
+    margin-right: -60%;
+}
+
+body {
+  background-color: #E3F5E0;
+}
+
+.col-sm-3 {
+  min-width: 280px;
+}
+
+#int_plot {
+  min-height: 600px;
+}
