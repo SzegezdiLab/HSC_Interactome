@@ -12,6 +12,9 @@ library(DT)
 library(tidyverse)
 library(Matrix)
 library(patchwork)
+library(CCPlotR)
+library(BiocManager)
+options(repos = BiocManager::repositories())
 
 # Define server logic required to draw a histogram
 shinyServer(function(input, output) {
@@ -29,57 +32,67 @@ shinyServer(function(input, output) {
   output$int_plot <- renderPlot({
     lig <- str_extract(input$interaction, '[^|]+')
     rec <- str_extract(input$interaction, '[^|]+$')
-    plot_df <- int_df %>% pivot_longer(cols = starts_with('agg'), names_to = 'tp', values_to = 'agg_rank', names_prefix = 'aggregate_rank_', values_drop_na = T) %>%
-      mutate(tp = factor(tp, levels = c('healthy', 'diagnosis'), labels = c('Healthy', 'Diagnosis')))
-    ggplot(plot_df %>% filter(ligand == lig, receptor == rec), 
-           aes(y = source, x = target, fill = -log10(agg_rank), size = -log10(agg_rank))) +
-      geom_point(pch=21) +
-      scale_x_discrete(limits = names(cell_cols), name = 'To') +
-      scale_y_discrete(limits = rev(names(cell_cols)), name = 'From') +
-      scale_fill_viridis_c(option = 'G', direction = -1, limits = c(1,6), breaks = seq(2,6,2)) +
-      scale_size(range = c(1, 5), limits = c(1,6), breaks = seq(2,6,2))+
-      labs(title = input$interaction) +
-      guides(fill= guide_legend(), size=guide_legend()) +
-      facet_wrap(~tp, nrow = 1) +
-      theme_minimal(base_size = 18) +
-      theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
-            axis.text = element_text(colour = 'black'),
-            axis.ticks = element_line(colour = 'grey20'),
-            strip.background = element_rect(colour = 'black', fill = 'transparent'),
-            plot.title = element_text(hjust = 0.5),
-            panel.grid.major = element_line(colour = 'grey60'),
-            legend.position = 'bottom')
+    plot_df <- int_df %>% pivot_longer(cols = starts_with('agg'), names_to = 'tp', values_to = 'score', names_prefix = 'aggregate_rank_', values_drop_na = T) %>%
+      mutate(tp = factor(tp, levels = c('healthy', 'diagnosis'), labels = c('Healthy', 'Diagnosis')),
+             from_hsc = ifelse(source == 'HSC.MPP', 'From HSC.MPP', 'To HSC.MPP'))
+    if(input$plot_type == 'Heatmap'){
+      print(cc_heatmap(plot_df %>% filter(ligand == lig, receptor == rec), option = 'B') + 
+        facet_grid(from_hsc ~ tp, scales = 'free_x', switch = 'y', space = 'free_x') +
+        theme(strip.placement = 'outside', legend.key.height = unit(4.5, 'lines')))
+    }
+    if(input$plot_type == 'Connections'){
+     h_plot <- cc_sigmoid(plot_df %>% filter(ligand == lig, receptor == rec, tp == 'Healthy'), colours = cell_cols) + 
+        labs(title = 'Healthy') +
+        theme(plot.title = element_text(hjust = 0.5, face = 'bold'))
+     d_plot <- cc_sigmoid(plot_df %>% filter(ligand == lig, receptor == rec, tp == 'Diagnosis'), colours = cell_cols) + 
+       labs(title = 'Diagnosis') +
+       theme(plot.title = element_text(hjust = 0.5, face = 'bold'))
+     print(h_plot + d_plot)
+    }
+    if(input$plot_type == 'Chord diagram'){
+      par(mfrow = c(1,2))
+      if(nrow(plot_df %>% filter(ligand == lig, receptor == rec, tp == 'Healthy')) > 0){
+        cc_circos(plot_df %>% filter(ligand == lig, receptor == rec, tp == 'Healthy'), cell_cols = cell_cols, option = 'B', cex = 1) 
+        title('Healthy')}
+      if(nrow(plot_df %>% filter(ligand == lig, receptor == rec, tp == 'Diagnosis')) > 0){
+        cc_circos(plot_df %>% filter(ligand == lig, receptor == rec, tp == 'Diagnosis'), cell_cols = cell_cols, option = 'B', cex = 1) 
+        title('Diagnosis')} 
+    }
+    if(input$plot_type == 'Violin plot'){
+      exp_df <- cbind(meta, data.frame(lig = exp_mtr[, lig]), data.frame(rec = exp_mtr[,rec]))
+      p1 <- ggplot(exp_df, aes(x = cell_type, y = lig, fill = timepoint)) +
+        geom_violin(show.legend = F, scale = 'width', col = 'black', draw_quantiles = 0.5) +
+        scale_fill_manual(values = cols$timepoint) +
+        scale_x_discrete(limits = names(cell_cols)) +
+        labs(y = lig) +
+        theme_classic(base_size = 18) +
+        theme(axis.text = element_text(colour = 'black'),
+              axis.text.x = element_blank(),
+              axis.ticks.x = element_blank(),
+              axis.line.x = element_blank(),
+              axis.title.x = element_blank(),
+              legend.position = 'none')
+      p2 <- ggplot(exp_df, aes(x = cell_type, y = rec)) +
+        geom_violin(aes(fill = timepoint), scale = 'width', draw_quantiles = 0.5) +
+        scale_fill_manual(values = cols$timepoint, name= 'Timepoint') +
+        scale_x_discrete(limits = names(cell_cols)) +
+        guides(colour = guide_legend(override.aes = list(size = 3))) +
+        labs(y = rec) +
+        theme_classic(base_size = 18) +
+        theme(axis.text = element_text(colour = 'black'),
+              axis.text.x  = element_text(angle = 90, hjust = 1, vjust = 0.5),
+              axis.title.x = element_blank(),
+              legend.position = 'bottom')
+      print(p1/p2)
+    }
+      
   })
-  output$vln_plot <- renderPlot({
-    lig <- str_extract(input$interaction, '[^|]+')
-    rec <- str_extract(input$interaction, '[^|]+$')
-    exp_df <- cbind(meta, data.frame(lig = exp_mtr[, lig]), data.frame(rec = exp_mtr[,rec]))
-    p1 <- ggplot(exp_df, aes(x = cell_type, y = lig, fill = timepoint)) +
-      geom_violin(show.legend = F, scale = 'width', col = 'black', draw_quantiles = 0.5) +
-      scale_fill_manual(values = cols$timepoint) +
-      scale_x_discrete(limits = names(cell_cols)) +
-      labs(y = lig) +
-      theme_classic(base_size = 18) +
-      theme(axis.text = element_text(colour = 'black'),
-            axis.text.x = element_blank(),
-            axis.ticks.x = element_blank(),
-            axis.line.x = element_blank(),
-            axis.title.x = element_blank(),
-            legend.position = 'none')
-    p2 <- ggplot(exp_df, aes(x = cell_type, y = rec)) +
-      geom_violin(aes(fill = timepoint), scale = 'width', draw_quantiles = 0.5) +
-      scale_fill_manual(values = cols$timepoint, name= 'Timepoint') +
-      scale_x_discrete(limits = names(cell_cols)) +
-      guides(colour = guide_legend(override.aes = list(size = 3))) +
-      labs(y = rec) +
-      theme_classic(base_size = 18) +
-      theme(axis.text = element_text(colour = 'black'),
-            axis.text.x  = element_text(angle = 90, hjust = 1, vjust = 0.5),
-            axis.title.x = element_blank(),
-            legend.position = 'bottom')
-    p1/p2
-  })
-  # output$umap <- renderPlot({
+  # output$vln_plot <- renderPlot({
+  #   lig <- str_extract(input$interaction, '[^|]+')
+  #   rec <- str_extract(input$interaction, '[^|]+$')
+  #   
+  # })
+  # # output$umap <- renderPlot({
   #   col_by <- ifelse(input$col_by == 'Cell type', 'cell_type', 'gene')
   #   exp_df <- cbind(umap_df, data.frame(gene = exp_mtr[, input$col_by_gene]))
   #   plot <- ggplot(exp_df, aes(x = umap1, y = umap2, col = exp_df[,col_by])) +

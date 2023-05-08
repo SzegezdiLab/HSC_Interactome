@@ -37,8 +37,9 @@ shinyUI(fluidPage(
                ))),
     tabPanel('Plots',
              selectInput('interaction', label = 'Select interaction:', choices = sort(unique(paste0(int_df$ligand, '|', int_df$receptor)))),
-             withSpinner(plotOutput('int_plot'), color="#9FDC93", size = 0.5),
-             withSpinner(plotOutput('vln_plot'), color="#9FDC93", size = 0.5)
+             radioButtons('plot_type', 'Select plot type', choices = c('Heatmap', 'Connections', 'Chord diagram', 'Violin plot'), selected = 'Heatmap'),
+             fluidRow(withSpinner(plotOutput('int_plot', width = '87.5%'), color="#9FDC93", size = 0.5), align = 'center')#,
+            # withSpinner(plotOutput('vln_plot', width = '50%'), color="#9FDC93", size = 0.5)
     )
     # tabPanel('UMAP',
     #          radioButtons("col_by",
