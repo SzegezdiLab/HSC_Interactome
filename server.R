@@ -37,26 +37,36 @@ shinyServer(function(input, output) {
              from_hsc = ifelse(source == 'HSC.MPP', 'From HSC.MPP', 'To HSC.MPP'))
     if(input$plot_type == 'Heatmap'){
       print(cc_heatmap(plot_df %>% filter(ligand == lig, receptor == rec), option = 'B') + 
-        facet_grid(from_hsc ~ tp, scales = 'free_x', switch = 'y', space = 'free_x') +
-        theme(strip.placement = 'outside', legend.key.height = unit(4.5, 'lines')))
+              facet_grid(from_hsc ~ tp, scales = 'free_x', switch = 'y', space = 'free_x') +
+              theme(strip.placement = 'outside', legend.key.height = unit(4.5, 'lines')))
     }
     if(input$plot_type == 'Connections'){
-     h_plot <- cc_sigmoid(plot_df %>% filter(ligand == lig, receptor == rec, tp == 'Healthy'), colours = cell_cols) + 
+      h_plot <- cc_sigmoid(plot_df %>% filter(ligand == lig, receptor == rec, tp == 'Healthy'), colours = cell_cols) + 
         labs(title = 'Healthy') +
         theme(plot.title = element_text(hjust = 0.5, face = 'bold'))
-     d_plot <- cc_sigmoid(plot_df %>% filter(ligand == lig, receptor == rec, tp == 'Diagnosis'), colours = cell_cols) + 
-       labs(title = 'Diagnosis') +
-       theme(plot.title = element_text(hjust = 0.5, face = 'bold'))
-     print(h_plot + d_plot)
+      d_plot <- cc_sigmoid(plot_df %>% filter(ligand == lig, receptor == rec, tp == 'Diagnosis'), colours = cell_cols) + 
+        labs(title = 'Diagnosis') +
+        theme(plot.title = element_text(hjust = 0.5, face = 'bold'))
+      print(h_plot + d_plot)
     }
     if(input$plot_type == 'Chord diagram'){
-      par(mfrow = c(1,2))
+      par(oma = c(4,1,1,1), mfrow = c(1, 2), mar = c(2, 2, 1, 1))
       if(nrow(plot_df %>% filter(ligand == lig, receptor == rec, tp == 'Healthy')) > 0){
-        cc_circos(plot_df %>% filter(ligand == lig, receptor == rec, tp == 'Healthy'), cell_cols = cell_cols, option = 'B', cex = 1) 
+        cc_circos(plot_df %>% filter(ligand == lig, receptor == rec, tp == 'Healthy'), cell_cols = cell_cols, option = 'B', cex = 1, show_legend = F, scale = T) 
         title('Healthy')}
       if(nrow(plot_df %>% filter(ligand == lig, receptor == rec, tp == 'Diagnosis')) > 0){
-        cc_circos(plot_df %>% filter(ligand == lig, receptor == rec, tp == 'Diagnosis'), cell_cols = cell_cols, option = 'B', cex = 1) 
-        title('Diagnosis')} 
+        cc_circos(plot_df %>% filter(ligand == lig, receptor == rec, tp == 'Diagnosis'), cell_cols = cell_cols, option = 'B', cex = 1, show_legend = F, scale = T) 
+        title('Diagnosis')}
+      par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0), new = TRUE)
+      plot(1, type = "n", axes=FALSE, xlab="", ylab="")
+      legend(x = "bottom", horiz = F,
+        legend = unique(c((plot_df %>% filter(ligand == lig, receptor == rec) %>% pull(source)), (plot_df %>% filter(ligand == lig, receptor == rec) %>% pull(target)))),
+        title = "Cell type",
+        pch = 15,
+        ncol = ceiling(length(unique(c((plot_df %>% filter(ligand == lig, receptor == rec) %>% pull(source)), (plot_df %>% filter(ligand == lig, receptor == rec) %>% pull(target)))))/2),
+        text.width = max(sapply(unique(c((plot_df %>% filter(ligand == lig, receptor == rec) %>% pull(source)), (plot_df %>% filter(ligand == lig, receptor == rec) %>% pull(target)))), strwidth)),
+        xpd = TRUE,
+        col = cell_cols[unique(c((plot_df %>% filter(ligand == lig, receptor == rec) %>% pull(source)), (plot_df %>% filter(ligand == lig, receptor == rec) %>% pull(target))))])
     }
     if(input$plot_type == 'Violin plot'){
       exp_df <- cbind(meta, data.frame(lig = exp_mtr[, lig]), data.frame(rec = exp_mtr[,rec]))
@@ -85,7 +95,7 @@ shinyServer(function(input, output) {
               legend.position = 'bottom')
       print(p1/p2)
     }
-      
+    
   })
   # output$vln_plot <- renderPlot({
   #   lig <- str_extract(input$interaction, '[^|]+')

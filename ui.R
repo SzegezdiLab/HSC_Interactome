@@ -21,7 +21,7 @@ shinyUI(fluidPage(
                       tags$div(class="flex-child", img(src ='hsc_interactome_logo.png', width = '20%')),
                       tags$div(class="flex-child", tags$h1("HSC Interactome"),
                                tags$p(tags$b('Explore cell-cell interactions between hematopoietic stem cells and other bone marrow cell types.', style = "font-size:18px;")),
-                               tags$p(tags$b('Citation:'), 'Single-cell characterisation of the hematopoietic bone marrow interactome in health and myeloid leukemia.', tags$i("Ennis S et. al.,", 'bioRxiv, 2022. DOI:', tags$a('10.1101/2022.05.13.491790', href = 'https://doi.org/10.1101/2022.05.13.491790')), style = "font-size:16px;"),
+                               tags$p(tags$b('Citation:'), 'Cell-cell interactome of the hematopoietic niche and its changes in acute myeloid leukemia.', tags$i("Ennis S et. al.,", 'iScience, 2023. DOI:', tags$a('10.1016/j.isci.2023.106943', href = 'https://doi.org/10.1016/j.isci.2023.106943')), style = "font-size:16px;"),
                                tags$p(tags$b('Contact:'), tags$a('Sarah Ennis', href='mailto:s.ennis6@nuigalway.ie'), style = "font-size:16px;"))),
              windowTitle = 'HSC Interactome'),
   tabsetPanel(
