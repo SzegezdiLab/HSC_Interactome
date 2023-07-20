@@ -13,6 +13,7 @@ library(shinycssloaders)
 
 int_df <- readRDS('www/int_df_h_d0.Rds')
 
+
 shinyUI(fluidPage(
   tags$head(
     tags$link(rel = "stylesheet", type = "text/css", href = "custom.css")
@@ -33,22 +34,29 @@ shinyUI(fluidPage(
                                     colnames(int_df), selected = c('source', 'target', 'ligand', 'receptor', 'timepoint'))
                ),
                mainPanel(
-               withSpinner(DT::DTOutput('interactome_table'), color="#9FDC93", size = 0.5)
+                 withSpinner(DT::DTOutput('interactome_table'), color="#9FDC93", size = 0.5)
                ))),
-    tabPanel('Plots',
-             selectInput('interaction', label = 'Select interaction:', choices = sort(unique(paste0(int_df$ligand, '|', int_df$receptor)))),
-             radioButtons('plot_type', 'Select plot type', choices = c('Heatmap', 'Connections', 'Chord diagram', 'Violin plot'), selected = 'Heatmap'),
-             fluidRow(withSpinner(plotOutput('int_plot', width = '87.5%'), color="#9FDC93", size = 0.5), align = 'center')#,
-            # withSpinner(plotOutput('vln_plot', width = '50%'), color="#9FDC93", size = 0.5)
+    tabPanel('Plots', 
+             tabsetPanel(
+               tabPanel('Interactions', 
+                        div(style="display:inline-block; vertical-align: top;",
+                            selectInput('interaction', label = 'Select interaction:', choices = sort(unique(paste0(int_df$ligand, '|', int_df$receptor)))),
+                            radioButtons('plot_type_int', 'Select plot type', choices = c('Heatmap', 'Connections', 'Chord diagram', 'Violin plot'), selected = 'Heatmap')),
+                        fluidRow(withSpinner(plotOutput('int_plot', width = '87.5%', height='600px'), color="#9FDC93", size = 0.5), align = 'center')),
+               tabPanel('Cell types',
+                        div(style="display:inline-block; vertical-align: top;",
+                            selectInput('celltype', label = 'Select cell type:', choices = sort(unique(c(int_df$source, int_df$target))))),
+                        div(style="display:inline-block; vertical-align: top;",    
+                            radioButtons('plot_type_cell', 'Select plot type', choices = c('Heatmap', 'Connections', 'Chord diagram', 'Network diagram'), selected = 'Heatmap')),
+                        div(style="display:inline-block; vertical-align: top;",    
+                            sliderInput('n_ints_cell', 'Max no. of interactions to plot', min = 5, max = 40, value = 20, step = 1)),
+                        fluidRow(withSpinner(plotOutput('cell_plot', width = '87.5%', height = "600px"), color="#9FDC93", size = 0.5), align = 'center')),
+               tabPanel('Genes',
+                        div(style="display:inline-block; vertical-align: top;",
+                            selectInput('gene', label = 'Select gene:', choices = sort(unique(c(int_df$ligand, int_df$receptor)))),
+                            radioButtons('plot_type_gene', 'Select plot type', choices = c('Heatmap', 'Connections', 'Chord diagram', 'Violin plot'), selected = 'Heatmap')),
+                        fluidRow(withSpinner(plotOutput('gene_plot', width = '87.5%'), color="#9FDC93", size = 0.5), align = 'center')))
+             
     )
-    # tabPanel('UMAP',
-    #          radioButtons("col_by",
-    #                       label = "Colour by:",
-    #                       choices = c("Cell type", "Gene"),
-    #                       selected = "Cell type",
-    #                       inline = TRUE),
-    #          selectInput('col_by_gene', label = 'Select gene:', choices = unique(c(int_df$ligand, int_df$receptor))),
-    #          plotOutput('umap')
-    # )
   )
 ))

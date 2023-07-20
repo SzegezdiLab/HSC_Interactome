@@ -35,12 +35,12 @@ shinyServer(function(input, output) {
     plot_df <- int_df %>% pivot_longer(cols = starts_with('agg'), names_to = 'tp', values_to = 'score', names_prefix = 'aggregate_rank_', values_drop_na = T) %>%
       mutate(tp = factor(tp, levels = c('healthy', 'diagnosis'), labels = c('Healthy', 'Diagnosis')),
              from_hsc = ifelse(source == 'HSC.MPP', 'From HSC.MPP', 'To HSC.MPP'))
-    if(input$plot_type == 'Heatmap'){
+    if(input$plot_type_int == 'Heatmap'){
       print(cc_heatmap(plot_df %>% filter(ligand == lig, receptor == rec), option = 'B') + 
               facet_grid(from_hsc ~ tp, scales = 'free_x', switch = 'y', space = 'free_x') +
               theme(strip.placement = 'outside', legend.key.height = unit(4.5, 'lines')))
     }
-    if(input$plot_type == 'Connections'){
+    if(input$plot_type_int == 'Connections'){
       h_plot <- cc_sigmoid(plot_df %>% filter(ligand == lig, receptor == rec, tp == 'Healthy'), colours = cell_cols) + 
         labs(title = 'Healthy') +
         theme(plot.title = element_text(hjust = 0.5, face = 'bold'))
@@ -49,7 +49,7 @@ shinyServer(function(input, output) {
         theme(plot.title = element_text(hjust = 0.5, face = 'bold'))
       print(h_plot + d_plot)
     }
-    if(input$plot_type == 'Chord diagram'){
+    if(input$plot_type_int == 'Chord diagram'){
       par(oma = c(4,1,1,1), mfrow = c(1, 2), mar = c(2, 2, 1, 1))
       if(nrow(plot_df %>% filter(ligand == lig, receptor == rec, tp == 'Healthy')) > 0){
         cc_circos(plot_df %>% filter(ligand == lig, receptor == rec, tp == 'Healthy'), cell_cols = cell_cols, option = 'B', cex = 1, show_legend = F, scale = T) 
@@ -60,15 +60,15 @@ shinyServer(function(input, output) {
       par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0), new = TRUE)
       plot(1, type = "n", axes=FALSE, xlab="", ylab="")
       legend(x = "bottom", horiz = F,
-        legend = unique(c((plot_df %>% filter(ligand == lig, receptor == rec) %>% pull(source)), (plot_df %>% filter(ligand == lig, receptor == rec) %>% pull(target)))),
-        title = "Cell type",
-        pch = 15,
-        ncol = ceiling(length(unique(c((plot_df %>% filter(ligand == lig, receptor == rec) %>% pull(source)), (plot_df %>% filter(ligand == lig, receptor == rec) %>% pull(target)))))/2),
-        text.width = max(sapply(unique(c((plot_df %>% filter(ligand == lig, receptor == rec) %>% pull(source)), (plot_df %>% filter(ligand == lig, receptor == rec) %>% pull(target)))), strwidth)),
-        xpd = TRUE,
-        col = cell_cols[unique(c((plot_df %>% filter(ligand == lig, receptor == rec) %>% pull(source)), (plot_df %>% filter(ligand == lig, receptor == rec) %>% pull(target))))])
+             legend = unique(c((plot_df %>% filter(ligand == lig, receptor == rec) %>% pull(source)), (plot_df %>% filter(ligand == lig, receptor == rec) %>% pull(target)))),
+             title = "Cell type",
+             pch = 15,
+             ncol = ceiling(length(unique(c((plot_df %>% filter(ligand == lig, receptor == rec) %>% pull(source)), (plot_df %>% filter(ligand == lig, receptor == rec) %>% pull(target)))))/2),
+             text.width = max(sapply(unique(c((plot_df %>% filter(ligand == lig, receptor == rec) %>% pull(source)), (plot_df %>% filter(ligand == lig, receptor == rec) %>% pull(target)))), strwidth)),
+             xpd = TRUE,
+             col = cell_cols[unique(c((plot_df %>% filter(ligand == lig, receptor == rec) %>% pull(source)), (plot_df %>% filter(ligand == lig, receptor == rec) %>% pull(target))))])
     }
-    if(input$plot_type == 'Violin plot'){
+    if(input$plot_type_int == 'Violin plot'){
       exp_df <- cbind(meta, data.frame(lig = exp_mtr[, lig]), data.frame(rec = exp_mtr[,rec]))
       p1 <- ggplot(exp_df, aes(x = cell_type, y = lig, fill = timepoint)) +
         geom_violin(show.legend = F, scale = 'width', col = 'black', draw_quantiles = 0.5) +
@@ -97,21 +97,69 @@ shinyServer(function(input, output) {
     }
     
   })
-  # output$vln_plot <- renderPlot({
-  #   lig <- str_extract(input$interaction, '[^|]+')
-  #   rec <- str_extract(input$interaction, '[^|]+$')
-  #   
-  # })
-  # # output$umap <- renderPlot({
-  #   col_by <- ifelse(input$col_by == 'Cell type', 'cell_type', 'gene')
-  #   exp_df <- cbind(umap_df, data.frame(gene = exp_mtr[, input$col_by_gene]))
-  #   plot <- ggplot(exp_df, aes(x = umap1, y = umap2, col = exp_df[,col_by])) +
-  #     geom_point() +
-  #     theme_linedraw(base_size = 12) +
-  #     theme(strip.text = element_text(size = 12, face = 'bold'))
-  #   if(input$col_by == 'Cell type'){
-  #     plot <- plot + scale_colour_manual(values = cell_cols, name = 'Cell type')}
-  #   else{plot <- plot + scale_colour_viridis_c(option = 'A', name = input$col_by_gene)}
-  #   plot
-  # })
+  
+  output$cell_plot <- renderPlot({
+    int_cell <- input$celltype
+    plot_df <- int_df %>% pivot_longer(cols = starts_with('agg'), names_to = 'tp', values_to = 'score', names_prefix = 'aggregate_rank_', values_drop_na = T) %>%
+      mutate(tp = factor(tp, levels = c('healthy', 'diagnosis'), labels = c('Healthy', 'Diagnosis')),
+             from_hsc = ifelse(source == 'HSC.MPP', 'From HSC.MPP', 'To HSC.MPP'))
+    if(input$plot_type_cell == 'Heatmap'){
+      p1 <- cc_heatmap(plot_df %>% filter(interacting_cell == int_cell, tp == 'Healthy'), option = 'B', n_top_ints = input$n_ints_cell) + 
+        scale_fill_viridis_c(option = 'C', na.value = 'black', direction = 1, limits=plot_df %>% 
+                               filter(interacting_cell == int_cell) %>% 
+                               group_by(tp) %>% slice_max(order_by = score, n = input$n_ints_cell) %>% 
+                               pull(score) %>% range()) +
+        labs(title = 'Healthy') +
+        theme(plot.title = element_text(hjust = 0.5),
+              legend.key.height = unit(0.3, 'inches'))
+
+      p2 <- cc_heatmap(plot_df %>% filter(interacting_cell == int_cell, tp != 'Healthy'), option = 'B', n_top_ints = input$n_ints_cell) + 
+        scale_fill_viridis_c(option = 'C', na.value = 'black', direction = 1, limits=plot_df %>% 
+                               filter(interacting_cell == int_cell) %>% 
+                               group_by(tp) %>% slice_max(order_by = score, n = input$n_ints_cell) %>% 
+                               pull(score) %>% range()) +
+        labs(title = 'Diagnosis') +
+        theme(plot.title = element_text(hjust = 0.5),
+              legend.key.height = unit(0.3, 'inches'))
+      print(p1+p2 + plot_layout(guides = 'collect'))
+    }
+    if(input$plot_type_cell == 'Connections'){
+      h_plot <- cc_sigmoid(plot_df %>% filter(interacting_cell == input$celltype, tp == 'Healthy'), colours = cell_cols, n_top_ints = input$n_ints_cell) +
+        labs(title = 'Healthy') +
+        theme(plot.title = element_text(hjust = 0.5, face = 'bold'))
+      d_plot <- cc_sigmoid(plot_df %>% filter(interacting_cell == input$celltype, tp == 'Diagnosis'), colours = cell_cols, n_top_ints = input$n_ints_cell) +
+        labs(title = 'Diagnosis') +
+        theme(plot.title = element_text(hjust = 0.5, face = 'bold'))
+      print(h_plot + d_plot)
+    }
+    if(input$plot_type_cell == 'Chord diagram'){
+      par(oma = c(4,1,1,1), mfrow = c(1, 2), mar = c(2, 2, 1, 1))
+      if(nrow(plot_df %>% filter(interacting_cell == input$celltype, tp == 'Healthy')) > 0){
+        cc_circos(plot_df %>% filter(interacting_cell == input$celltype, tp == 'Healthy'), cell_cols = cell_cols, option = 'B', cex = 0.8, show_legend = F, scale = T, n_top_ints = input$n_ints_cell)
+        title('Healthy')}
+      if(nrow(plot_df %>% filter(interacting_cell == input$celltype, tp == 'Diagnosis')) > 0){
+        cc_circos(plot_df %>% filter(interacting_cell == input$celltype, tp == 'Diagnosis'), cell_cols = cell_cols, option = 'B', cex = 0.8, show_legend = F, scale = T, n_top_ints = input$n_ints_cell)
+        title('Diagnosis')}
+      par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0), new = TRUE)
+      plot(1, type = "n", axes=FALSE, xlab="", ylab="")
+      legend(x = "bottom", horiz = F,
+             legend = unique(c((plot_df %>% filter(interacting_cell == input$celltype) %>% pull(source)), (plot_df %>% filter(interacting_cell == input$celltype) %>% pull(target)))),
+             title = "Cell type",
+             pch = 15,
+             ncol = ceiling(length(unique(c((plot_df %>% filter(interacting_cell == input$celltype) %>% pull(source)), (plot_df %>% filter(interacting_cell == input$celltype) %>% pull(target)))))/2),
+             text.width = max(sapply(unique(c((plot_df %>% filter(interacting_cell == input$celltype) %>% pull(source)), (plot_df %>% filter(interacting_cell == input$celltype) %>% pull(target)))), strwidth)),
+             xpd = TRUE,
+             col = cell_cols[unique(c((plot_df %>% filter(interacting_cell == input$celltype) %>% pull(source)), (plot_df %>% filter(interacting_cell == input$celltype) %>% pull(target))))])
+    }
+    if(input$plot_type_cell == 'Network diagram'){
+      h_netplot <- cc_network(plot_df %>% filter(interacting_cell == input$celltype, tp == 'Healthy'), colours = cell_cols, n_top_ints = input$n_ints_cell, option = 'B', node_size = 2.2) +
+        labs(title = 'Healthy') +
+        theme(plot.title = element_text(hjust = 0.5, face = 'bold'))
+      d_netplot <- cc_network(plot_df %>% filter(interacting_cell == input$celltype, tp == 'Diagnosis'), colours = cell_cols, n_top_ints = input$n_ints_cell, option = 'B', node_size = 2.2) +
+        labs(title = 'Diagnosis') +
+        theme(plot.title = element_text(hjust = 0.5, face = 'bold'))
+      print(h_netplot + d_netplot)
+    }
+  })
+  
 })
