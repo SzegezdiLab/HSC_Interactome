@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300&family=Source+Code+Pro&display=swap');
+
 .flex-container {
     display: flex;
 }
@@ -11,13 +13,58 @@
 }
 
 body {
+  background-color: #FFFFFF;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.well{
   background-color: #E3F5E0;
 }
 
 .col-sm-3 {
-  min-width: 280px;
+  min-width: 365px;
 }
 
 #int_plot {
   min-height: 600px;
+  padding: 0px;
+}
+
+h1 {
+font-family: 'Source Code Pro', monospace;
+font-size: 50px;
+}
+
+a {
+  color: #33b766;
+  font-weight: 500;
+}
+
+a:focus, a:hover {
+    color: #237c36;
+    font-weight: 500;
+}
+
+.nav-tabs>li.active>a, .nav-tabs>li.active>a:focus, .nav-tabs>li.active>a:hover {
+    color: #333333;
+    cursor: default;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-bottom-color: transparent;
+    font-weight: 700;
+}
+
+.nav-tabs {
+  font-size: 15px;
+}
+
+.mainDiv {
+  margin-top: 35px;
+  margin-bottom: 35px;
+}
+
+#tabs {
+  font-size: 14px;
+  padding-left: 0px;
+  padding-right: 0px;
 }

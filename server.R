@@ -1,12 +1,3 @@
-#
-# This is the server logic of a Shiny web application. You can run the
-# application by clicking 'Run App' above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
-
 library(shiny)
 library(DT)
 library(tidyverse)
@@ -160,6 +151,75 @@ shinyServer(function(input, output) {
         theme(plot.title = element_text(hjust = 0.5, face = 'bold'))
       print(h_netplot + d_netplot)
     }
+  })
+  
+  output$gene_plot <- renderPlot({
+    genes <- input$gene
+    plot_df <- int_df %>% pivot_longer(cols = starts_with('agg'), names_to = 'tp', values_to = 'score', names_prefix = 'aggregate_rank_', values_drop_na = T) %>%
+      mutate(tp = factor(tp, levels = c('healthy', 'diagnosis'), labels = c('Healthy', 'Diagnosis')),
+             from_hsc = ifelse(source == 'HSC.MPP', 'From HSC.MPP', 'To HSC.MPP'))
+    if(input$plot_type_gene == 'Heatmap'){
+      p1 <- cc_heatmap(plot_df %>% filter((ligand %in% genes | receptor %in% genes) & tp == 'Healthy'), option = 'B', n_top_ints = input$n_ints_gene) + 
+        scale_fill_viridis_c(option = 'C', na.value = 'black', direction = 1, limits=plot_df %>% 
+                               filter(ligand %in% genes | receptor %in% genes) %>% 
+                               group_by(tp) %>% slice_max(order_by = score, n = input$n_ints_gene) %>% 
+                               pull(score) %>% range()) +
+        labs(title = 'Healthy') +
+        theme(plot.title = element_text(hjust = 0.5),
+              legend.key.height = unit(0.3, 'inches'))
+      
+      p2 <- cc_heatmap(plot_df %>% filter((ligand %in% genes | receptor %in% genes) & tp != 'Healthy'), option = 'B', n_top_ints = input$n_ints_gene) + 
+        scale_fill_viridis_c(option = 'C', na.value = 'black', direction = 1, limits=plot_df %>% 
+                               filter(ligand %in% genes | receptor %in% genes) %>% 
+                               group_by(tp) %>% slice_max(order_by = score, n = input$n_ints_gene) %>% 
+                               pull(score) %>% range()) +
+        labs(title = 'Diagnosis') +
+        theme(plot.title = element_text(hjust = 0.5),
+              legend.key.height = unit(0.3, 'inches'))
+      print(p1+p2 + plot_layout(guides = 'collect'))
+    }
+    if(input$plot_type_gene == 'Connections'){
+      h_plot <- cc_sigmoid(plot_df %>% filter((ligand %in% genes | receptor %in% genes) & tp == 'Healthy'), colours = cell_cols, n_top_ints = input$n_ints_gene) +
+        labs(title = 'Healthy') +
+        theme(plot.title = element_text(hjust = 0.5, face = 'bold'))
+      d_plot <- cc_sigmoid(plot_df %>% filter((ligand %in% genes | receptor %in% genes) & tp != 'Healthy'), colours = cell_cols, n_top_ints = input$n_ints_gene) +
+        labs(title = 'Diagnosis') +
+        theme(plot.title = element_text(hjust = 0.5, face = 'bold'))
+      print(h_plot + d_plot)
+    }
+    if(input$plot_type_gene == 'Chord diagram'){
+      par(oma = c(4,1,1,1), mfrow = c(1, 2), mar = c(2, 2, 1, 1))
+      if(nrow(plot_df %>% filter((ligand %in% genes | receptor %in% genes) & tp == 'Healthy')) > 0){
+        cc_circos(plot_df %>% filter((ligand %in% genes | receptor %in% genes) & tp == 'Healthy'), cell_cols = cell_cols, option = 'B', cex = 0.8, show_legend = F, scale = T, n_top_ints = input$n_ints_gene)
+        title('Healthy')}
+      if(nrow(plot_df %>% filter((ligand %in% genes | receptor %in% genes) & tp != 'Healthy')) > 0){
+        cc_circos(plot_df %>% filter((ligand %in% genes | receptor %in% genes) & tp != 'Healthy'), cell_cols = cell_cols, option = 'B', cex = 0.8, show_legend = F, scale = T, n_top_ints = input$n_ints_gene)
+        title('Diagnosis')}
+      par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0), new = TRUE)
+      plot(1, type = "n", axes=FALSE, xlab="", ylab="")
+      legend(x = "bottom", horiz = F,
+             legend = unique(c((plot_df %>% filter(ligand %in% genes | receptor %in% genes) %>% pull(source)), (plot_df %>% filter(ligand %in% genes | receptor %in% genes) %>% pull(target)))),
+             title = "Cell type",
+             pch = 15,
+             ncol = ceiling(length(unique(c((plot_df %>% filter(ligand %in% genes | receptor %in% genes) %>% pull(source)), (plot_df %>% filter(ligand %in% genes | receptor %in% genes) %>% pull(target)))))/2),
+             text.width = max(sapply(unique(c((plot_df %>% filter(ligand %in% genes | receptor %in% genes) %>% pull(source)), (plot_df %>% filter(ligand %in% genes | receptor %in% genes) %>% pull(target)))), strwidth)),
+             xpd = TRUE,
+             col = cell_cols[unique(c((plot_df %>% filter(ligand %in% genes | receptor %in% genes) %>% pull(source)), (plot_df %>% filter(ligand %in% genes | receptor %in% genes) %>% pull(target))))])
+    }
+    if(input$plot_type_gene == 'Violin plot'){
+      exp_df <- cbind(meta, (as.data.frame(as.matrix(exp_mtr[, input$gene])) %>% setNames(input$gene))) %>% pivot_longer(input$gene, names_to = 'gene', values_to = 'value')
+      ggplot(exp_df, aes(x = cell_type, y = value, fill = timepoint)) +
+        geom_violin(show.legend = T, scale = 'width', col = 'black', draw_quantiles = 0.5) +
+        scale_fill_manual(values = cols$timepoint, name = 'Timepoint') +
+        scale_x_discrete(limits = names(cell_cols)) +
+        labs(y = 'Normalised expression', x = NULL) +
+        facet_grid(gene~., switch = 'y') +
+        theme_classic(base_size = 18) +
+        theme(axis.text = element_text(colour = 'black'),
+              axis.text.x = element_text(hjust=1, angle = 90, vjust = 0.5),
+              strip.placement = 'outside',
+              legend.position = 'bottom')
+      }
   })
   
 })
