@@ -7,7 +7,18 @@ int_df <- readRDS('www/int_df_h_d0.Rds')
 
 shinyUI(fluidPage(
   tags$head(
-    tags$link(rel = "stylesheet", type = "text/css", href = "custom.css")
+    tags$link(rel = "stylesheet", type = "text/css", href = "custom.css"),
+    tags$style(
+      HTML(".gene-tooltip { cursor: pointer; }")
+    ),
+    tags$script(
+      HTML('
+        $(document).on("mouseenter", ".gene-tooltip", function() {
+          var geneName = $(this).text();
+          var geneInfo = Shiny.setInputValue("currentGene", geneName);
+        });
+      ')
+    )
   ),
   titlePanel(tags$div(class='flex-container',
                       tags$div(class="flex-child", img(src ='hsc_interactome_logo.png', width = '20%')),
