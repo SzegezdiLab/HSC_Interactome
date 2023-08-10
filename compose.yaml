@@ -1,0 +1,10 @@
+services:
+  rstudio:
+    image: interactome_dev
+    build: ./container
+    ports:
+      - "8888:8787"
+    environment:
+      PASSWORD: pass
+    volumes:
+      - ./:/home/rstudio:rw
