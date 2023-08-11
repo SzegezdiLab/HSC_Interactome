@@ -1,4 +1,5 @@
 library(shiny)
+library(shinyjs)
 library(DT)
 library(tidyverse)
 library(Matrix)
@@ -20,37 +21,43 @@ shinyServer(function(input, output) {
   scrape_gene_info <- function(gene_name) {
     gene_id = genes_ids[gene_name]
     url <- paste0('https://www.ncbi.nlm.nih.gov/gene/', gene_id)
-    page <- read_html(url) %>% html_elements("dd")
-    summary <- html_text(page[10])
-    return(summary)
+    page <- read_html(url) %>% html_elements("dt:contains('Summary') + dd")
+    summary <- html_text(page)
+    return(c(summary,url))
   }
   
   output$interactome_table <- DT::renderDT(
-    int_df[,input$show_cols], extensions = 'Buttons', server=FALSE,
-    options = list(autoWidth = TRUE, scrollX = T, buttons = c('csv', 'excel'), dom = 'Bfrtip', pageLength = 20, tooltip=TRUE,
-                   columnDefs = list(
-                     list(
-                       targets = c("ligand", "receptor"),
-                       render = JS(
-                         "function(data, type, row, meta) {",
-                         "  var geneName = data;",
-                         "  var geneInfo = ", 
-                         "    Shiny.onInputChange('currentGene', geneName);",
-                         "  return '<span class=\"gene-tooltip\" title=\"' + geneInfo + '\">' + data + '</span>';",
-                         "}"
-                       )
-                     )
-                   )), filter = list(
+    int_df[,input$show_cols], 
+    extensions = 'Buttons', 
+    server=FALSE,
+    options = list(autoWidth = TRUE, scrollX = T, buttons = c('csv', 'excel'), dom = 'Bfrtip', pageLength = 20,
+                   initComplete = JS(
+                     "function(settings, json) {",
+                     "  var table = this.api();",
+                     "  table.on('click', 'td', function() {",
+                     "    var colIdx = table.cell(this).index().column;",
+                     "    if (table.column(colIdx).header().textContent === 'ligand' || table.column(colIdx).header().textContent === 'receptor') {",
+                     "      var geneName = table.cell(this).data();",
+                     "      Shiny.setInputValue('selected_gene', geneName);",
+                     "    }",
+                     "  });",
+                     "}")),
+    filter = list(
       position = 'top', clear = FALSE
-    ), class = "display"
+    ),
+    class = "display"
   )
   
-  observeEvent(input$currentGene, {
-    gene_name <- input$currentGene
-    gene_info <- scrape_gene_info(gene_name)
+  observeEvent(input$selected_gene, {
+    gene_name <- input$selected_gene
+    scraped_info <- scrape_gene_info(gene_name)
+    gene_info <- scraped_info[1]
+    title =  tags$a(href = scraped_info[2], target = "_blank", paste0("From NCBI: ", gene_name))
     showModal(modalDialog(
-      title = gene_name,
-      gene_info
+      title = title,
+      gene_info,
+      easyClose = TRUE,
+      footer = NULL
     ))
   })
   

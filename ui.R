@@ -1,4 +1,5 @@
 library(shiny)
+library(shinyjs)
 library(DT)
 library(shinycssloaders)
 
@@ -7,19 +8,9 @@ int_df <- readRDS('www/int_df_h_d0.Rds')
 
 shinyUI(fluidPage(
   tags$head(
-    tags$link(rel = "stylesheet", type = "text/css", href = "custom.css"),
-    tags$style(
-      HTML(".gene-tooltip { cursor: pointer; }")
-    ),
-    tags$script(
-      HTML('
-        $(document).on("mouseenter", ".gene-tooltip", function() {
-          var geneName = $(this).text();
-          var geneInfo = Shiny.setInputValue("currentGene", geneName);
-        });
-      ')
-    )
+    tags$link(rel = "stylesheet", type = "text/css", href = "custom.css")
   ),
+  useShinyjs(),
   titlePanel(tags$div(class='flex-container',
                       tags$div(class="flex-child", img(src ='hsc_interactome_logo.png', width = '20%')),
                       tags$div(class="flex-child", tags$h1("HSC Interactome"),
