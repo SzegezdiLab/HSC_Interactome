@@ -6,6 +6,7 @@ library(Matrix)
 library(patchwork)
 library(CCPlotR)
 library(BiocManager)
+library(rvest)
 options(repos = BiocManager::repositories())
 
 # Define server logic required to draw a histogram
@@ -21,7 +22,7 @@ shinyServer(function(input, output) {
   scrape_gene_info <- function(gene_name) {
     gene_id = genes_ids[gene_name]
     url <- paste0('https://www.ncbi.nlm.nih.gov/gene/', gene_id)
-    page <- read_html(url) %>% html_elements("dt:contains('Summary') + dd")
+    page <- rvest::read_html(url) %>% html_elements("dt:contains('Summary') + dd")
     summary <- html_text(page)
     return(c(summary,url))
   }
