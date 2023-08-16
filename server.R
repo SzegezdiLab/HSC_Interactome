@@ -1,10 +1,12 @@
 library(shiny)
+library(shinyjs)
 library(DT)
 library(tidyverse)
 library(Matrix)
 library(patchwork)
 library(CCPlotR)
 library(BiocManager)
+library(rvest)
 options(repos = BiocManager::repositories())
 
 # Define server logic required to draw a histogram
@@ -13,13 +15,53 @@ shinyServer(function(input, output) {
   exp_mtr <- readRDS('www/ligand_receptor_mtx_h_d0.Rds')
   meta <- readRDS('www/meta.Rds')
   cols <- readRDS('www/colour_palettes.Rds')
+  genes_ids <- readRDS('www/genes_ids')
   cell_cols <- cols$celltype
+  
+  ## scrap gene info from NCBI:
+  scrape_gene_info <- function(gene_name) {
+    gene_id = genes_ids[gene_name]
+    url <- paste0('https://www.ncbi.nlm.nih.gov/gene/', gene_id)
+    page <- rvest::read_html(url) %>% html_elements("dt:contains('Summary') + dd")
+    summary <- html_text(page)
+    return(c(summary,url))
+  }
+  
   output$interactome_table <- DT::renderDT(
-    int_df[,input$show_cols], extensions = 'Buttons', server=FALSE,
-    options = list(autoWidth = TRUE, scrollX = T, buttons = c('csv', 'excel'), dom = 'Bfrtip', pageLength = 20), filter = list(
+    int_df[,input$show_cols], 
+    extensions = 'Buttons', 
+    server=FALSE,
+    options = list(autoWidth = TRUE, scrollX = T, buttons = c('csv', 'excel'), dom = 'Bfrtip', pageLength = 20,
+                   initComplete = JS(
+                     "function(settings, json) {",
+                     "  var table = this.api();",
+                     "  table.on('click', 'td', function() {",
+                     "    var colIdx = table.cell(this).index().column;",
+                     "    if (table.column(colIdx).header().textContent === 'ligand' || table.column(colIdx).header().textContent === 'receptor') {",
+                     "      var geneName = table.cell(this).data();",
+                     "      Shiny.setInputValue('selected_gene', geneName);",
+                     "    }",
+                     "  });",
+                     "}")),
+    filter = list(
       position = 'top', clear = FALSE
-    ), class = "display"
+    ),
+    class = "display"
   )
+  
+  observeEvent(input$selected_gene, {
+    gene_name <- input$selected_gene
+    scraped_info <- scrape_gene_info(gene_name)
+    gene_info <- scraped_info[1]
+    title =  tags$a(href = scraped_info[2], target = "_blank", paste0("From NCBI: ", gene_name))
+    showModal(modalDialog(
+      title = title,
+      gene_info,
+      easyClose = TRUE,
+      footer = NULL
+    ))
+  })
+  
   output$int_plot <- renderPlot({
     lig <- str_extract(input$interaction, '[^|]+')
     rec <- str_extract(input$interaction, '[^|]+$')
@@ -103,7 +145,7 @@ shinyServer(function(input, output) {
         labs(title = 'Healthy') +
         theme(plot.title = element_text(hjust = 0.5),
               legend.key.height = unit(0.3, 'inches'))
-
+      
       p2 <- cc_heatmap(plot_df %>% filter(interacting_cell == int_cell, tp != 'Healthy'), option = 'B', n_top_ints = input$n_ints_cell) + 
         scale_fill_viridis_c(option = 'C', na.value = 'black', direction = 1, limits=plot_df %>% 
                                filter(interacting_cell == int_cell) %>% 
@@ -219,7 +261,7 @@ shinyServer(function(input, output) {
               axis.text.x = element_text(hjust=1, angle = 90, vjust = 0.5),
               strip.placement = 'outside',
               legend.position = 'bottom')
-      }
+    }
   })
   
 })

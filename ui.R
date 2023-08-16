@@ -1,4 +1,5 @@
 library(shiny)
+library(shinyjs)
 library(DT)
 library(shinycssloaders)
 
@@ -9,12 +10,13 @@ shinyUI(fluidPage(
   tags$head(
     tags$link(rel = "stylesheet", type = "text/css", href = "custom.css")
   ),
+  useShinyjs(),
   titlePanel(tags$div(class='flex-container',
                       tags$div(class="flex-child", img(src ='hsc_interactome_logo.png', width = '20%')),
                       tags$div(class="flex-child", tags$h1("HSC Interactome"),
                                tags$p(tags$b('Explore cell-cell interactions between hematopoietic stem cells and other bone marrow cell types.', style = "font-size:18px;")),
                                tags$p(tags$b('Citation:'), 'Cell-cell interactome of the hematopoietic niche and its changes in acute myeloid leukemia.', tags$i("Ennis S et. al.,", 'iScience, 2023. DOI:', tags$a('10.1016/j.isci.2023.106943', href = 'https://doi.org/10.1016/j.isci.2023.106943')), style = "font-size:16px;"),
-                               tags$p(tags$b('Created by: '), tags$a(' Sarah Ennis', href='mailto:s.ennis6@nuigalway.ie', .noWS='outside'), ', Micheál Ó Dálaigh and Jacopo Umberto Verga', style = "font-size:16px;", .noWS = c("after-begin", "before-end")))),
+                               tags$p(tags$b('Created by: '), tags$a(' Sarah Ennis', href='mailto:s.ennis6@nuigalway.ie', .noWS='outside'), ', Micheál Ó Dálaigh and',tags$a('  Jacopo Umberto Verga', href='mailto:j.verga1@universityofgalway.ie', .noWS='outside'), style = "font-size:16px;", .noWS = c("after-begin", "before-end")))),
              windowTitle = 'HSC Interactome'),
   tabsetPanel(
     tabPanel('Table',
