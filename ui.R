@@ -24,8 +24,8 @@ shinyUI(fluidPage(
                  sidebarLayout(
                    sidebarPanel(
                      width = 3,
-                     checkboxGroupInput("show_cols", "Columns to display",
-                                        colnames(int_df), selected = c('source', 'target', 'ligand', 'receptor', 'timepoint'))
+                     checkboxGroupInput("show_cols", "Columns to display", choiceValues = 1:ncol(int_df),
+                                        choiceNames = colnames(int_df), selected = c(2:6))
                    ),
                    mainPanel(
                      withSpinner(DT::DTOutput('interactome_table'), color="#9FDC93", size = 0.5)

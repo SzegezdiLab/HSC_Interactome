@@ -1,5 +1,6 @@
 library(shiny)
 library(shinyjs)
+library(shinycssloaders)
 library(DT)
 library(tidyverse)
 library(Matrix)
@@ -28,10 +29,10 @@ shinyServer(function(input, output) {
   }
   
   output$interactome_table <- DT::renderDT(
-    int_df[,input$show_cols], 
+    int_df, 
     extensions = 'Buttons', 
     server=FALSE,
-    options = list(autoWidth = TRUE, scrollX = T, buttons = c('csv', 'excel'), dom = 'Bfrtip', pageLength = 20,
+    options = list(autoWidth = TRUE, scrollX = T, buttons = c('csv', 'excel'), dom = 'Bfrtip', pageLength = 20, columnDefs = list(list(targets = c(4,5), className = 'link_col'), list(targets = which(!1:ncol(int_df) %in% input$show_cols), visible=FALSE)), 
                    initComplete = JS(
                      "function(settings, json) {",
                      "  var table = this.api();",

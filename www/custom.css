@@ -68,3 +68,9 @@ a:focus, a:hover {
   padding-left: 0px;
   padding-right: 0px;
 }
+
+.link_col:hover {
+  color: #237c36;
+  cursor: pointer;
+  text-decoration: underline;
+}
