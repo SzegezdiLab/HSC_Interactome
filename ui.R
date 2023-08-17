@@ -20,7 +20,7 @@ shinyUI(fluidPage(
                                tags$p(tags$b('Citation:'), 'Cell-cell interactome of the hematopoietic niche and its changes in acute myeloid leukemia.', tags$i("Ennis S et. al.,", 'iScience, 2023. DOI:', tags$a('10.1016/j.isci.2023.106943', href = 'https://doi.org/10.1016/j.isci.2023.106943')), style = "font-size:16px;"),
                                tags$p(tags$b('Created by: '), tags$a(' Sarah Ennis', href='mailto:s.ennis6@nuigalway.ie', .noWS='outside'), ',', tags$a(' Micheál Ó Dálaigh', href='mailto:m.odalaigh1@universityofgalway.ie', .noWS='outside'), ', and',tags$a('  Jacopo Umberto Verga', href='mailto:j.verga1@universityofgalway.ie', .noWS='outside'), style = "font-size:16px;", .noWS = c("after-begin", "before-end")))),
              windowTitle = 'HSC Interactome'),
-  tabsetPanel(
+  tabsetPanel(id='panels',
     tabPanel('Table',
              div(class = 'mainDiv',
                  sidebarLayout(
@@ -75,19 +75,18 @@ shinyUI(fluidPage(
                    )))
     ),
     tabPanel('Help',
-             tags$br(),
-             tags$ul(
-               tags$li('Welcome to the help section of the HSC Interactome R Shiny app', style = "font-size:18px;"),
-               tags$li('Please see the drop-down list below for common questions regarding the dataset and how to navigate the app.', style = "font-size:18px;"),
-               tags$li('If your question is not answered here, please open an issue on our GitHub issues page ', tags$a('here', href = 'https://github.com/SzegezdiLab/HSC_Interactome/issues'), style = "font-size:18px;")
-             ),
-             
-             selectInput("help", label = h3("Please select an issue:", style = "font-weight: bold;"),
-                         choices = issues),
-             
-             # Render help section based on issue chosen
-             tags$h3(textOutput("help_issue"), style = "font-weight: bold;"),
-             tags$div(textOutput("help_comment"), style = "font-size: 18px;")
-    )
+             div(class = 'helpDiv',
+                 tags$li('Welcome to the help section of the HSC Interactome R Shiny app'),
+                 tags$li('Please see the drop-down list below for common questions regarding the dataset and how to navigate the app'),
+                 tags$li('If your question is not answered here, please open an issue on our GitHub issues page ', tags$a('here', href = 'https://github.com/SzegezdiLab/HSC_Interactome/issues')),
+                 
+                 
+                 selectInput("help", label = h3("Please select an issue:", style = "font-weight: bold;"),
+                             choices = issues),
+                 
+                 # Render help section based on issue chosen
+                 tags$h3(textOutput("help_issue"), style = "font-weight: bold;"),
+                 tags$div(uiOutput("help_comment"))
+             ))
   )
 ))

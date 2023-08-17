@@ -6,12 +6,12 @@ library(tidyverse)
 library(Matrix)
 library(patchwork)
 library(CCPlotR)
-library(BiocManager)
+#library(BiocManager)
 library(rvest)
-options(repos = BiocManager::repositories())
+#options(repos = BiocManager::repositories())
 
 # Define server logic required to draw a histogram
-shinyServer(function(input, output) {
+shinyServer(function(input, output, session) {
   int_df <- readRDS('www/int_df_h_d0.Rds')
   exp_mtr <- readRDS('www/ligand_receptor_mtx_h_d0.Rds')
   meta <- readRDS('www/meta.Rds')
@@ -128,7 +128,7 @@ shinyServer(function(input, output) {
              col = cell_cols[unique(c((plot_df %>% filter(ligand == lig, receptor == rec) %>% pull(source)), (plot_df %>% filter(ligand == lig, receptor == rec) %>% pull(target))))])
     }
     if(input$plot_type_int == 'Violin plot'){
-      exp_df <- cbind(meta, data.frame(lig = exp_mtr[, lig]), data.frame(rec = exp_mtr[,rec]))
+      exp_df <- cbind(meta, data.frame(lig = exp_mtr[,lig], rec = exp_mtr[,rec]))
       p1 <- ggplot(exp_df, aes(x = cell_type, y = lig, fill = timepoint)) +
         geom_violin(show.legend = F, scale = 'width', col = 'black', draw_quantiles = 0.5) +
         scale_fill_manual(values = cols$timepoint) +
@@ -290,6 +290,11 @@ shinyServer(function(input, output) {
     }
   })
   
+  observeEvent(input$link_to_tab, {
+    newvalue <- "Table"
+    updateTabsetPanel(session, "panels", newvalue)
+  })
+  
   ## Reactive expressions to access relevant help sections in ui
   selected_title <- reactive({
     help_topic <- input$help
@@ -307,8 +312,8 @@ shinyServer(function(input, output) {
     selected_title()
   })
   
-  output$help_comment <- renderText({
-    selected_help()
+  output$help_comment <- renderUI({
+    eval(parse(text =selected_help()))
   })
-  
+  session$onSessionEnded(stopApp)
 })

@@ -63,6 +63,27 @@ a:focus, a:hover {
   margin-bottom: 35px;
 }
 
+.helpDiv {
+  margin-top: 35px;
+  margin-bottom: 35px;
+  margin-left: 35px;
+  margin-right: 35px;
+  font-size:18px;
+}
+
+table.help_table {
+  width:100%;
+}
+
+table.help_table th, table.help_table td {
+  border: 1px solid black;
+  border-collapse: collapse;
+  padding: 15px;
+  border-spacing: 10px;
+  box-sizing: content-box;
+}
+
+
 #tabs {
   font-size: 14px;
   padding-left: 0px;
