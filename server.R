@@ -18,6 +18,8 @@ shinyServer(function(input, output) {
   cols <- readRDS('www/colour_palettes.Rds')
   genes_ids <- readRDS('www/genes_ids')
   cell_cols <- cols$celltype
+  ct_table <- readRDS('www/ct_abbreviations.Rds') # Cell types and abbreviations for DT in Table tab
+  help <- readRDS("www/help.Rds") # Read in dataframe of issues for help section
   
   ## scrap gene info from NCBI:
   scrape_gene_info <- function(gene_name) {
@@ -28,11 +30,19 @@ shinyServer(function(input, output) {
     return(c(summary,url))
   }
   
+  ## Create a dictionary-like structure using a list for accessing names of cell type abbreviations for DT in Table tab:
+  dictionary_list <- list()
+  for (i in 1:nrow(ct_table)) {
+    key <- ct_table$abbreviation[i]
+    value <- ct_table$full_name[i]
+    dictionary_list[[key]] <- value
+  }
+  
   output$interactome_table <- DT::renderDT(
     int_df, 
     extensions = 'Buttons', 
     server=FALSE,
-    options = list(autoWidth = TRUE, scrollX = T, buttons = c('csv', 'excel'), dom = 'Bfrtip', pageLength = 20, columnDefs = list(list(targets = c(4,5), className = 'link_col'), list(targets = which(!1:ncol(int_df) %in% input$show_cols), visible=FALSE)), 
+    options = list(autoWidth = TRUE, scrollX = T, buttons = c('csv', 'excel'), dom = 'Bfrtip', pageLength = 20, columnDefs = list(list(targets = c(2,3,4,5), className = 'link_col'), list(targets = which(!1:ncol(int_df) %in% input$show_cols), visible=FALSE)), 
                    initComplete = JS(
                      "function(settings, json) {",
                      "  var table = this.api();",
@@ -41,7 +51,10 @@ shinyServer(function(input, output) {
                      "    if (table.column(colIdx).header().textContent === 'ligand' || table.column(colIdx).header().textContent === 'receptor') {",
                      "      var geneName = table.cell(this).data();",
                      "      Shiny.setInputValue('selected_gene', geneName);",
-                     "    }",
+                     "    } else if (table.column(colIdx).header().textContent === 'source' || table.column(colIdx).header().textContent === 'target') {",
+                     "      var cellName = table.cell(this).data();",
+                     "      Shiny.setInputValue('selected_cell', cellName);",
+                     "      }",
                      "  });",
                      "}")),
     filter = list(
@@ -58,6 +71,18 @@ shinyServer(function(input, output) {
     showModal(modalDialog(
       title = title,
       gene_info,
+      easyClose = TRUE,
+      footer = NULL
+    ))
+  })
+  ## Get full name of cell type when abbreviation clicked in DT in Table tab
+  observeEvent(input$selected_cell, {
+    cell_name <- input$selected_cell
+    cell_info <- paste0(cell_name, " is short for ", dictionary_list[[cell_name]])
+    title =  tags$h2("Cell abbreviation:")
+    showModal(modalDialog(
+      title = title,
+      cell_info,
       easyClose = TRUE,
       footer = NULL
     ))
@@ -263,6 +288,27 @@ shinyServer(function(input, output) {
               strip.placement = 'outside',
               legend.position = 'bottom')
     }
+  })
+  
+  ## Reactive expressions to access relevant help sections in ui
+  selected_title <- reactive({
+    help_topic <- input$help
+    index <- which(help$title == help_topic)
+    help$issue[index]
+  })
+  
+  selected_help <- reactive({
+    help_topic <- input$help
+    index <- which(help$title == help_topic)
+    help$comment[index]
+  })
+  
+  output$help_issue <- renderText({
+    selected_title()
+  })
+  
+  output$help_comment <- renderText({
+    selected_help()
   })
   
 })
