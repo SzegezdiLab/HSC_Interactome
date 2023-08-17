@@ -1,4 +1,4 @@
-# HSC Interactome<img src="https://github.com/SzegezdiLab/HSC_Interactome/raw/main/hex.png" alt="hex sticker" width="100" align='right'/>
+# HSC Interactome<img src="https://github.com/SzegezdiLab/HSC_Interactome/raw/main/hex.png" alt="hex sticker" width="130" align='right'/>
 
 
 
