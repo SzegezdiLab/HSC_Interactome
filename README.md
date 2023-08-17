@@ -1,4 +1,6 @@
-## HSC Interactome
+# HSC Interactome<img src="https://github.com/SzegezdiLab/HSC_Interactome/raw/main/hex.png" alt="hex sticker" width="80" align='right'/>
+
+
 
 This repository contains the code for the HSC Interactome shiny app for exploring cell-cell interactions between hematopoietic stem cells and other bone marrow cell types. 
 
