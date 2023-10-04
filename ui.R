@@ -18,7 +18,7 @@ shinyUI(fluidPage(
                       tags$div(class="flex-child", tags$h1("HSC Interactome"),
                                tags$p(tags$b('Explore cell-cell interactions between hematopoietic stem cells and other bone marrow cell types.', style = "font-size:18px;")),
                                tags$p(tags$b('Citation:'), 'Cell-cell interactome of the hematopoietic niche and its changes in acute myeloid leukemia.', tags$i("Ennis S et. al.,", 'iScience, 2023. DOI:', tags$a('10.1016/j.isci.2023.106943', href = 'https://doi.org/10.1016/j.isci.2023.106943')), style = "font-size:16px;"),
-                               tags$p(tags$b('Created by: '), tags$a(' Sarah Ennis', href='mailto:s.ennis6@nuigalway.ie', .noWS='outside'), ',', tags$a(' Micheál Ó Dálaigh', href='mailto:m.odalaigh1@universityofgalway.ie', .noWS='outside'), ', and',tags$a('  Jacopo Umberto Verga', href='mailto:j.verga1@universityofgalway.ie', .noWS='outside'), style = "font-size:16px;", .noWS = c("after-begin", "before-end")))),
+                               tags$p(tags$b('Created by: '), tags$a(' Sarah Ennis', href='mailto:s.ennis6@universityofgalway.ie', .noWS='outside'), ',', tags$a(' Micheál Ó Dálaigh', href='mailto:m.odalaigh1@universityofgalway.ie', .noWS='outside'), ',', tags$a(' Jacopo Umberto Verga', href='mailto:j.verga1@universityofgalway.ie', .noWS='outside'), ',',tags$a(' Pilib Ó Broin', href='mailto:pilib.obroin@universityofgalway.ie', .noWS='outside'), ' and', tags$a(' Eva Szegezdi', href='mailto:eva.szegezdi@universityofgalway.ie', .noWS='outside'), style = "font-size:16px;", .noWS = c("after-begin", "before-end")))),
              windowTitle = 'HSC Interactome'),
   tabsetPanel(id='panels',
     tabPanel('Table',
