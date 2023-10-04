@@ -6,9 +6,9 @@ library(tidyverse)
 library(Matrix)
 library(patchwork)
 library(CCPlotR)
-#library(BiocManager)
 library(rvest)
-#options(repos = BiocManager::repositories())
+library(BiocManager)
+options(repos = BiocManager::repositories())
 
 # Define server logic required to draw a histogram
 shinyServer(function(input, output, session) {
