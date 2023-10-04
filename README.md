@@ -19,7 +19,7 @@ You can download this repository and run the app locally by following the instru
 
 The repository contains a Dockerfile and a compose.yaml file to build and run a RStudio server image to host and run the ShinyApp locally. To do so you need [Docker](https://www.docker.com/) and [Docker compose plugin](https://docs.docker.com/compose/) installed. 
 
-Once the repository has been cloned, go inside the HSC_interactome folder and run:
+Once the repository has been cloned, go inside the HSC_Interactome folder and run:
 
 ```bash
 docker compose up
